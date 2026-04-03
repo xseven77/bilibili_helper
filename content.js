@@ -66,8 +66,8 @@ function downloadViaAnchor(url, filename) {
   a.href = url
   a.download = filename
   a.target = '_blank'
-  // 添加 referer 头
-  a.setAttribute('referrer', 'no-referrer')
+  // B站需要添加 referer
+  a.setAttribute('referrer', 'https://www.bilibili.com')
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
