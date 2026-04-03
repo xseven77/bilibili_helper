@@ -1,5 +1,5 @@
 // Background Service Worker
-// 处理下载和存储
+// 处理下载记录
 
 // 监听来自 popup 和 content script 的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -20,11 +20,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   if (request.action === 'clearRecords') {
     clearRecords().then(() => sendResponse({ success: true }))
-    return true
-  }
-  
-  if (request.action === 'downloadFile') {
-    downloadFile(request.url, request.filename).then(() => sendResponse({ success: true }))
     return true
   }
 })
@@ -77,26 +72,6 @@ async function clearRecords() {
   return new Promise((resolve) => {
     chrome.storage.local.set({ downloadRecords: [] }, resolve)
   })
-}
-
-// 下载文件
-async function downloadFile(url, filename) {
-  try {
-    const response = await fetch(url)
-    const blob = await response.blob()
-    const blobUrl = URL.createObjectURL(blob)
-    
-    chrome.downloads.download({
-      url: blobUrl,
-      filename: filename,
-      saveAs: true
-    })
-    
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000)
-  } catch (err) {
-    console.error('Download failed:', err)
-    throw err
-  }
 }
 
 // 清理过期的下载记录（7天前）

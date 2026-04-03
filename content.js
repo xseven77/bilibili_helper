@@ -36,11 +36,15 @@ function getVideoInfo() {
 async function getVideoDownloadUrl(bvid) {
   try {
     // 调用B站播放页接口获取视频信息
-    const response = await fetch(`https://api.bilibili.com/x/player/playurl?bvid=${bvid}&qn=80&fnval=0`)
+    const response = await fetch(`https://api.bilibili.com/x/player/playurl?bvid=${bvid}&qn=80&fnval=0&platform=html5`)
     const data = await response.json()
     
     if (data.code === 0 && data.data && data.data.durl) {
-      return data.data.durl[0].url
+      // 返回第一段视频URL
+      return {
+        url: data.data.durl[0].url,
+        size: data.data.durl[0].size
+      }
     }
     return null
   } catch (err) {
@@ -56,6 +60,19 @@ function getHighResCover(coverUrl) {
   return coverUrl.replace(/@.*\.jpg$/, '@4k.jpg')
 }
 
+// 直接通过 a 标签下载（绕过 CORS）
+function downloadViaAnchor(url, filename) {
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.target = '_blank'
+  // 添加 referer 头
+  a.setAttribute('referrer', 'no-referrer')
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
 // 监听来自 popup 的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'getVideoInfo') {
@@ -66,25 +83,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   if (request.action === 'downloadVideo') {
     const info = getVideoInfo()
-    getVideoDownloadUrl(info.bvid).then(url => {
-      if (url) {
+    
+    getVideoDownloadUrl(info.bvid).then(result => {
+      if (result && result.url) {
+        // 添加到记录
         chrome.runtime.sendMessage({
           action: 'addRecord',
           data: {
             type: 'video',
             title: info.title,
-            url: url,
-            bvid: info.bvid
+            url: info.url, // 记录播放页地址
+            bvid: info.bvid,
+            size: result.size
           }
         })
-        chrome.runtime.sendMessage({
-          action: 'downloadFile',
-          url: url,
-          filename: `bilibili/${info.title}.mp4`
-        })
+        
+        // 直接在页面触发下载
+        const filename = `${info.title.replace(/[\\/:*?"<>|]/g, '_')}.mp4`
+        downloadViaAnchor(result.url, filename)
+        
         sendResponse({ success: true })
       } else {
-        sendResponse({ success: false, error: '无法获取视频地址' })
+        sendResponse({ success: false, error: '无法获取视频地址，请确认视频可播放' })
       }
     })
     return true
@@ -104,11 +124,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           bvid: info.bvid
         }
       })
-      chrome.runtime.sendMessage({
-        action: 'downloadFile',
-        url: coverUrl,
-        filename: `bilibili/covers/${info.title}.jpg`
-      })
+      
+      // 直接下载封面
+      const filename = `${info.title.replace(/[\\/:*?"<>|]/g, '_')}_cover.jpg`
+      downloadViaAnchor(coverUrl, filename)
+      
       sendResponse({ success: true })
     } else {
       sendResponse({ success: false, error: '无法获取封面' })
@@ -118,4 +138,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 })
 
 // 页面加载完成后通知
-console.log('Bilibili Helper 已加载')
+console.log('B站助手 已加载')
