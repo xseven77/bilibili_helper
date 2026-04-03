@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>哔哩哔哩助手</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 340px;
+      min-height: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+      background: #f4f5f7;
+    }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #00A1D6 0%, #FB7299 100%);
+      color: white;
+      padding: 16px;
+      text-align: center;
+      border-radius: 0 0 20px 20px;
+    }
+    
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    /* Video Info */
+    .video-info {
+      padding: 12px;
+      background: white;
+      margin: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .video-info .title {
+      font-size: 13px;
+      color: #18191c;
+      font-weight: 500;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    
+    .video-info .meta {
+      font-size: 11px;
+      color: #9499a0;
+    }
+    
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      gap: 8px;
+      padding: 0 12px;
+    }
+    
+    .action-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 12px;
+      background: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .action-btn:active {
+      transform: translateY(0);
+    }
+    
+    .action-btn .icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+    
+    .action-btn .label {
+      font-size: 12px;
+      color: #18191c;
+      font-weight: 500;
+    }
+    
+    .action-btn .desc {
+      font-size: 10px;
+      color: #9499a0;
+      margin-top: 2px;
+    }
+    
+    .action-btn.download .icon { color: #00A1D6; }
+    .action-btn.cover .icon { color: #FB7299; }
+    
+    .action-btn.loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    
+    /* Records Section */
+    .records-section {
+      padding: 12px;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .section-header h2 {
+      font-size: 13px;
+      color: #18191c;
+      font-weight: 500;
+    }
+    
+    .section-header .count {
+      font-size: 11px;
+      color: #9499a0;
+    }
+    
+    .clear-btn {
+      font-size: 11px;
+      color: #FB7299;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .clear-btn:hover {
+      text-decoration: underline;
+    }
+    
+    /* Record List */
+    .record-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .record-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: white;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    
+    .record-item .type-icon {
+      font-size: 20px;
+      margin-right: 10px;
+    }
+    
+    .record-item.video .type-icon { color: #00A1D6; }
+    .record-item.cover .type-icon { color: #FB7299; }
+    
+    .record-item .info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .record-item .title {
+      font-size: 12px;
+      color: #18191c;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .record-item .time {
+      font-size: 10px;
+      color: #9499a0;
+      margin-top: 2px;
+    }
+    
+    .record-item .delete-btn {
+      background: none;
+      border: none;
+      color: #9499a0;
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+    
+    .record-item .delete-btn:hover {
+      color: #FB7299;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #9499a0;
+      font-size: 12px;
+    }
+    
+    .empty-state .icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 100;
+    }
+    
+    .toast.show {
+      opacity: 1;
+    }
+    
+    /* Not B站 Page */
+    .not-bili {
+      padding: 40px 20px;
+      text-align: center;
+      color: #9499a0;
+    }
+    
+    .not-bili .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    
+    .not-bili h3 {
+      font-size: 14px;
+      color: #18191c;
+      margin-bottom: 8px;
+    }
+    
+    .not-bili p {
+      font-size: 12px;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Not B站 Page -->
+  <div class="not-bili" id="notBili">
+    <div class="icon">📺</div>
+    <h3>请访问B站视频页面</h3>
+    <p>打开B站视频页面后使用本插件</p>
+  </div>
+  
+  <!-- Main Content -->
+  <div id="mainContent" class="hidden">
+    <div class="header">
+      <h1>哔哩哔哩助手</h1>
+      <p>B站小工具，让生活更简单</p>
+    </div>
+    
+    <div class="video-info" id="videoInfo">
+      <div class="title" id="videoTitle">加载中...</div>
+      <div class="meta" id="videoMeta">-</div>
+    </div>
+    
+    <div class="actions">
+      <button class="action-btn download" id="downloadVideo">
+        <span class="icon">📹</span>
+        <span class="label">下载视频</span>
+        <span class="desc">MP4格式</span>
+      </button>
+      <button class="action-btn cover" id="downloadCover">
+        <span class="icon">🖼️</span>
+        <span class="label">下载封面</span>
+        <span class="desc">高清原图</span>
+      </button>
+    </div>
+    
+    <div class="records-section">
+      <div class="section-header">
+        <h2>📋 下载记录</h2>
+        <span class="count" id="recordCount">0 条</span>
+      </div>
+      <button class="clear-btn" id="clearRecords">清空记录</button>
+      
+      <div class="record-list" id="recordList">
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>暂无下载记录</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="toast" id="toast"></div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
